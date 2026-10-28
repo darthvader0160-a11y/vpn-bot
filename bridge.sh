@@ -7,6 +7,7 @@ NL=${1:?Укажи IP сервера в Нидерландах: bash bridge.sh 1
 PORTS="443 8443 2083 39443 47443"
 
 [ "$(id -u)" = 0 ] || { echo "Нужны права root"; exit 1; }
+echo "$NL" > /etc/vpn-bridge.conf   # для autoupdate.sh
 export DEBIAN_FRONTEND=noninteractive
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
