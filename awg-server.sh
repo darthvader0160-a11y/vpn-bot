@@ -15,10 +15,10 @@ PEER=data/awg-peer.pub
 if ! command -v awg >/dev/null; then
   echo "ставлю AmneziaWG"
   export DEBIAN_FRONTEND=noninteractive
-  apt-get install -y -qq software-properties-common >/dev/null
+  apt-get -o DPkg::Lock::Timeout=900 install -y -qq software-properties-common >/dev/null
   add-apt-repository -y ppa:amnezia/ppa >/dev/null
-  apt-get update -qq
-  apt-get install -y -qq "linux-headers-$(uname -r)" amneziawg amneziawg-tools >/dev/null
+  apt-get -o DPkg::Lock::Timeout=900 update -qq
+  apt-get -o DPkg::Lock::Timeout=900 install -y -qq "linux-headers-$(uname -r)" amneziawg amneziawg-tools >/dev/null
 fi
 
 mkdir -p "$DIR" && chmod 700 "$DIR"

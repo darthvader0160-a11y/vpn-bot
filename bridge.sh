@@ -12,8 +12,8 @@ export DEBIAN_FRONTEND=noninteractive
 if ! command -v netfilter-persistent >/dev/null; then
   echo iptables-persistent iptables-persistent/autosave_v4 boolean true | debconf-set-selections
   echo iptables-persistent iptables-persistent/autosave_v6 boolean true | debconf-set-selections
-  apt-get update -qq
-  apt-get install -y -qq iptables iptables-persistent >/dev/null
+  apt-get -o DPkg::Lock::Timeout=900 update -qq
+  apt-get -o DPkg::Lock::Timeout=900 install -y -qq iptables iptables-persistent >/dev/null
 fi
 
 cat > /etc/sysctl.d/99-bridge.conf <<'EOF'
