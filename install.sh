@@ -72,6 +72,7 @@ ufw allow "$SSH_PORT"/tcp >/dev/null
 ufw allow "$(get XHTTP_PORT)"/tcp >/dev/null
 ufw allow "$(get TCP_PORT)"/tcp >/dev/null
 ufw allow "$(get SUB_PORT)"/tcp >/dev/null
+for p in 2053 2083 39443 47443; do ufw allow "$p"/tcp >/dev/null; done   # запасные варианты (bot/vpn.py NODE_SPECS)
 ufw --force enable >/dev/null
 
 # ---------- панель 3x-ui ----------

@@ -39,9 +39,14 @@ class Node:
 
 
 # Подключения, которые бот держит на сервере. Порядок = порядок в подписке (первое — основное).
+# Без port/sni берутся XHTTP_PORT/TCP_PORT и REALITY_SNI из настроек. Порты всех вариантов открывает install.sh.
 NODE_SPECS = [
     {"key": "xhttp", "title": "Основной", "network": "xhttp", "flow": ""},
     {"key": "tcp", "title": "Резервный", "network": "tcp", "flow": VISION},
+    {"key": "x-vk", "title": "Вариант 3", "network": "xhttp", "flow": "", "port": 2053, "sni": "vk.com"},
+    {"key": "t-apple", "title": "Вариант 4", "network": "tcp", "flow": VISION, "port": 2083, "sni": "www.apple.com"},
+    {"key": "x-high", "title": "Вариант 5", "network": "xhttp", "flow": "", "port": 39443, "sni": "ya.ru"},
+    {"key": "t-high", "title": "Вариант 6", "network": "tcp", "flow": VISION, "port": 47443, "sni": "www.samsung.com"},
 ]
 
 
@@ -147,13 +152,14 @@ class VPN:
     async def ensure_nodes(self):
         """Находит или создаёт подключения в панели."""
         inbounds = await self.panel.list_inbounds()
-        ports = {"xhttp": self.cfg.xhttp_port, "tcp": self.cfg.tcp_port}
+        default_ports = {"xhttp": self.cfg.xhttp_port, "tcp": self.cfg.tcp_port}
         nodes = []
         for spec in NODE_SPECS:
             found = next((i for i in inbounds if i.get("remark") == f"vpn-{spec['key']}"), None)
             if not found:
-                log.info("Создаю подключение vpn-%s на порту %s", spec["key"], ports[spec["key"]])
-                await self.panel.add_inbound(inbound_payload(spec, ports[spec["key"]], self.cfg.reality_sni))
+                port = spec.get("port") or default_ports[spec["key"]]
+                log.info("Создаю подключение vpn-%s на порту %s", spec["key"], port)
+                await self.panel.add_inbound(inbound_payload(spec, port, spec.get("sni") or self.cfg.reality_sni))
                 inbounds = await self.panel.list_inbounds()
                 found = next(i for i in inbounds if i.get("remark") == f"vpn-{spec['key']}")
             nodes.append(node_from_inbound(spec, found))
