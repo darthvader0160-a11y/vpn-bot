@@ -3,6 +3,7 @@
 # Запуск на сервере из папки бота:  bash install.sh
 # Повторный запуск безопасен: настройки из .env сохраняются, бот пересобирается.
 set -euo pipefail
+trap 'printf "\n\033[1;31m✖ Установка прервалась на строке %s. Пришли этот экран разработчику.\033[0m\n" "$LINENO"' ERR
 cd "$(dirname "$0")"
 
 say()  { printf '\n\033[1;36m▶ %s\033[0m\n' "$*"; }
@@ -62,7 +63,7 @@ PUBLIC_IP=$(curl -4fsS --max-time 10 https://api.ipify.org || curl -4fsS --max-t
 
 # ---------- файрвол: снаружи видны только SSH, VPN и подписки ----------
 say "Настраиваю файрвол"
-SSH_PORT=$(sshd -T 2>/dev/null | awk '/^port /{print $2; exit}')
+SSH_PORT=$( (sshd -T 2>/dev/null || /usr/sbin/sshd -T 2>/dev/null || true) | awk '/^port /{print $2; exit}' || true)
 SSH_PORT=${SSH_PORT:-22}
 ufw --force reset >/dev/null
 ufw default deny incoming >/dev/null
@@ -87,7 +88,7 @@ docker exec 3xui /app/x-ui setting \
   -username "$(get PANEL_USER)" -password "$(get PANEL_PASS)" \
   -port "$(get PANEL_PORT)" -webBasePath "/$(get PANEL_PATH)/" -listenIP 127.0.0.1 >/dev/null
 if [ -z "$(get PANEL_TOKEN)" ]; then
-  TOKEN=$(docker exec 3xui /app/x-ui setting -getApiToken 2>/dev/null | awk '/apiToken:/{print $2}' | tail -1)
+  TOKEN=$(docker exec 3xui /app/x-ui setting -getApiToken 2>/dev/null | awk '/apiToken:/{print $2}' | tail -1 || true)
   [ -n "$TOKEN" ] || fail "Панель не выдала API-токен. Посмотри: docker compose logs 3xui"
   put PANEL_TOKEN "$TOKEN"
 fi

@@ -1,0 +1,6 @@
+.env
+ДОСТУПЫ.txt
+data/
+xui-db/
+xui-cert/
+__pycache__/
