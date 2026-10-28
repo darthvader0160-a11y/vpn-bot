@@ -56,13 +56,19 @@ async def main():
     if not users:
         raise SystemExit("Нет активных пользователей: сначала напиши боту /start")
     uuids = {c["node"]: c["uuid"] for c in db.clients(users[0]["tg_id"])}
-    for i, node in enumerate(vpn.nodes):
-        if node.key not in uuids:
-            continue
-        path = os.path.join(cfg.data_dir, f"selftest-{node.key}.json")
-        with open(path, "w") as f:
-            json.dump(client_config(node, uuids[node.key], cfg.server_host, 10800 + i), f, indent=2)
-        print(f"{node.key} {10800 + i} sni={node.sni} port={node.port}")
+    # Сначала напрямую, потом через мост (если он настроен) — так видно, рабочий ли сам мост.
+    hosts = [("", cfg.server_host)] + ([("bridge-", cfg.bridge_host)] if cfg.bridge_host else [])
+    n = 0
+    for prefix, host in hosts:
+        for node in vpn.nodes:
+            if node.key not in uuids:
+                continue
+            name = f"{prefix}{node.key}"
+            path = os.path.join(cfg.data_dir, f"selftest-{name}.json")
+            with open(path, "w") as f:
+                json.dump(client_config(node, uuids[node.key], host, 10800 + n), f, indent=2)
+            print(f"{name} {10800 + n} via={host} port={node.port}")
+            n += 1
 
 
 if __name__ == "__main__":
