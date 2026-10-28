@@ -203,12 +203,14 @@ async def raw_keys(cb: CallbackQuery, vpn: VPN):
     if not active_only(vpn, cb.from_user.id):
         await cb.answer("Нет доступа", show_alert=True)
         return
-    parts = [f"<b>{title}</b>\n<code>{html.escape(link)}</code>" for title, link in vpn.links(cb.from_user.id)]
-    await cb.message.answer(
-        "📋 Ключи по отдельности. Коснись ключа, чтобы скопировать, затем в V2Box: «+» → Import v2ray uri from clipboard.\n\n"
-        + "\n\n".join(parts)
-    )
     await cb.answer()
+    await cb.message.answer(
+        "📋 Ключи по отдельности. Коснись ключа, чтобы скопировать, затем в приложении: "
+        "V2Box — «+» → Import v2ray uri from clipboard, Happ — «Из буфера»."
+    )
+    # По одному ключу в сообщении: все вместе не влезают в лимит Telegram (4096 символов).
+    for title, link in vpn.links(cb.from_user.id):
+        await cb.message.answer(f"<b>{html.escape(title)}</b>\n<code>{html.escape(link)}</code>")
 
 
 @router.message(F.text == T.BTN_HOWTO)

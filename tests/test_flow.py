@@ -133,8 +133,13 @@ class FlowTest(unittest.IsolatedAsyncioTestCase):
         # Кнопки пользователя.
         sent = await self.feed(msg(ALICE, "🔑 Мой ключ"))
         self.assertTrue(any(isinstance(m, SendPhoto) for m in sent))
+        self.vpn.cfg.bridge_host = "198.51.100.9"
+        self.vpn.cfg.server_host6 = "2a00::1"
         sent = await self.feed(cb(ALICE, "raw"))
-        self.assertTrue(any("vless://" in t for t in self.texts(sent)))
+        keys = [t for t in self.texts(sent) if "vless://" in t]
+        self.assertEqual(len(keys), len(self.vpn.links(ALICE)))
+        self.assertTrue(all(len(t) <= 4096 for t in self.texts(sent)))
+        self.vpn.cfg.bridge_host = self.vpn.cfg.server_host6 = ""
         sent = await self.feed(msg(ALICE, "📊 Мой трафик"))
         self.assertTrue(any("получено" in t for t in self.texts(sent)))
         sent = await self.feed(msg(ALICE, "🆘 Не работает"))
