@@ -1,0 +1,3 @@
+aiogram==3.31.0
+segno==1.6.6
+cryptography==50.0.1

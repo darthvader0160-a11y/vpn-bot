@@ -1,0 +1,29 @@
+# VPN-сервер: панель 3x-ui (Xray) + бот выдачи ключей. Запуск: docker compose up -d --build
+# Оба контейнера работают в сети сервера (network_mode: host): Xray слушает 443/8443,
+# бот обращается к панели по 127.0.0.1 и раздаёт подписки на SUB_PORT.
+services:
+  3xui:
+    image: ghcr.io/mhsanaei/3x-ui:v3.11.0   # версия закреплена: API бота проверен на 3.11
+    container_name: 3xui
+    network_mode: host
+    volumes:
+      - ./xui-db:/etc/x-ui
+      - ./xui-cert:/root/cert
+    environment:
+      TZ: Europe/Moscow
+      XRAY_VMESS_AEAD_FORCED: "false"
+      XUI_ENABLE_FAIL2BAN: "false"
+    restart: unless-stopped
+
+  bot:
+    build: .
+    container_name: vpn-bot
+    network_mode: host
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ./data:/data
+    depends_on:
+      - 3xui
+    restart: unless-stopped
