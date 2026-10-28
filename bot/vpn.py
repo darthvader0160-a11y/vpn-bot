@@ -50,7 +50,13 @@ NODE_SPECS = [
 # Эти подключения дублируются в подписке по IPv6, если задан SERVER_HOST6.
 IPV6_KEYS = ("xhttp", "x-high", "t-high")
 # Варианты через мост в России (проверено 28.10.2026: из РФ проходит tcp на 47443).
-BRIDGE_VARIANTS = [("t-high", "🇷🇺 Основной"), ("x-high", "🇷🇺 Резервный")]
+# Третий элемент — отпечаток TLS: V2Box с "chrome" шлёт большой ClientHello (постквантовый ключ),
+# который по дороге режется ("failed to read client hello"), с "safari" он короче и проходит.
+BRIDGE_VARIANTS = [
+    ("t-high", "🇷🇺 Основной", None),
+    ("x-high", "🇷🇺 Резервный", None),
+    ("t-high", "🇷🇺 Для V2Box", "safari"),
+]
 
 
 def _b64url(raw: bytes) -> str:
@@ -133,8 +139,8 @@ def node_from_inbound(spec: dict, inbound: dict) -> Node:
     )
 
 
-def vless_link(node: Node, user_uuid: str, host: str, label: str) -> str:
-    q = {"encryption": "none", "security": "reality", "sni": node.sni, "fp": node.fp, "pbk": node.pbk, "sid": node.sid}
+def vless_link(node: Node, user_uuid: str, host: str, label: str, fp: str | None = None) -> str:
+    q = {"encryption": "none", "security": "reality", "sni": node.sni, "fp": fp or node.fp, "pbk": node.pbk, "sid": node.sid}
     if node.flow:
         q["flow"] = node.flow
     q["type"] = node.network
@@ -260,11 +266,11 @@ class VPN:
             # Мост пересылает подключения на нидерландский сервер как есть, поэтому ключи те же.
             # Из России проходят только высокие порты через мост, поэтому в подписке только они.
             by_key = {n.key: n for n in self.nodes}
-            for key, title in BRIDGE_VARIANTS:
+            for key, title, fp in BRIDGE_VARIANTS:
                 node = by_key.get(key)
                 if node and key in uuids:
                     label = f"{self.cfg.brand} · {title}"
-                    out.append((title, vless_link(node, uuids[key], self.cfg.bridge_host, label)))
+                    out.append((title, vless_link(node, uuids[key], self.cfg.bridge_host, label, fp)))
             return out
         for node in self.nodes:
             if node.key in uuids:
