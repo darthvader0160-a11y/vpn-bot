@@ -182,10 +182,13 @@ class VPN:
         client = self._client(tg_id, node, user_uuid, email, token, enable)
         try:
             await self.panel.add_client(node.inbound_id, client)
-        except PanelError:
-            # Клиент с таким email остался в панели (например, после переустановки бота) — пересоздаём.
-            await self.panel.delete_client(email)
-            await self.panel.add_client(node.inbound_id, client)
+        except PanelError as first:
+            # Клиент с таким email мог остаться в панели (например, после переустановки бота) — пересоздаём.
+            try:
+                await self.panel.delete_client(email)
+                await self.panel.add_client(node.inbound_id, client)
+            except PanelError as second:
+                raise PanelError(f"создание клиента {email}: {first}") from second
         self.db.set_client(tg_id, node.key, user_uuid, email)
 
     async def issue(self, tg_id: int) -> str:
