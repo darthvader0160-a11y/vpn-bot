@@ -49,6 +49,8 @@ NODE_SPECS = [
 ]
 # Эти подключения дублируются в подписке по IPv6, если задан SERVER_HOST6.
 IPV6_KEYS = ("xhttp", "x-high", "t-high")
+# Варианты через мост в России (проверено 28.10.2026: из РФ проходит tcp на 47443).
+BRIDGE_VARIANTS = [("t-high", "🇷🇺 Основной"), ("x-high", "🇷🇺 Резервный")]
 
 
 def _b64url(raw: bytes) -> str:
@@ -256,11 +258,14 @@ class VPN:
         out = []
         if self.cfg.bridge_host:
             # Мост пересылает подключения на нидерландский сервер как есть, поэтому ключи те же.
-            for node in self.nodes:
-                if node.key in uuids:
-                    title = f"🇷🇺 Мост · {node.title}"
+            # Из России проходят только высокие порты через мост, поэтому в подписке только они.
+            by_key = {n.key: n for n in self.nodes}
+            for key, title in BRIDGE_VARIANTS:
+                node = by_key.get(key)
+                if node and key in uuids:
                     label = f"{self.cfg.brand} · {title}"
-                    out.append((title, vless_link(node, uuids[node.key], self.cfg.bridge_host, label)))
+                    out.append((title, vless_link(node, uuids[key], self.cfg.bridge_host, label)))
+            return out
         for node in self.nodes:
             if node.key in uuids:
                 label = f"{self.cfg.server_name} · {node.title}"

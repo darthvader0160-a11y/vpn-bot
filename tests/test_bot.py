@@ -204,10 +204,11 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
         # Мост: те же ключи, адрес российского сервера, идут первыми.
         self.cfg.bridge_host = "198.51.100.9"
         bl = self.vpn.links(42)
-        self.assertEqual(bl[0][0], "🇷🇺 Мост · Основной")
-        self.assertEqual(urlparse(bl[0][1]).hostname, "198.51.100.9")
-        self.assertEqual(urlparse(bl[0][1]).username, self.fake.clients["u42-xhttp"]["client"]["id"])
-        self.assertEqual(len(bl), 10)
+        self.assertEqual([t for t, _ in bl], ["🇷🇺 Основной", "🇷🇺 Резервный"])
+        main = urlparse(bl[0][1])
+        self.assertEqual((main.hostname, main.port), ("198.51.100.9", 47443))
+        self.assertEqual(main.username, self.fake.clients["u42-t-high"]["client"]["id"])
+        self.assertIn("flow=xtls-rprx-vision", bl[0][1])
         self.cfg.bridge_host = ""
 
         await self.vpn.revoke(42)

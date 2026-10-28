@@ -109,7 +109,7 @@ class FlowTest(unittest.IsolatedAsyncioTestCase):
     async def test_full_flow(self):
         # Админ получает ключ сразу.
         sent = await self.feed(msg(ADMIN, "/start", "Админ"))
-        self.assertTrue(any("ключ-подписка" in t for t in self.texts(sent, ADMIN)))
+        self.assertTrue(any("Твой доступ" in t for t in self.texts(sent, ADMIN)))
         self.assertEqual(self.db.get_user(ADMIN)["status"], "active")
 
         # Алиса просит доступ, админу приходит заявка.
