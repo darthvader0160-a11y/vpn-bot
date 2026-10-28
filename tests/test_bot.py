@@ -63,6 +63,8 @@ class FakePanel:
             c = data["client"]
             if c["email"] in self.clients:
                 return fail("Duplicate email: " + c["email"])
+            if c.get("subId") and any(x["client"].get("subId") == c["subId"] for x in self.clients.values()):
+                return fail("subId already in use: " + c["subId"])
             assert data["inboundIds"] and all(any(i["id"] == x for i in self.inbounds) for x in data["inboundIds"])
             self.clients[c["email"]] = {"client": c, "inboundId": data["inboundIds"][0], "up": 1000, "down": 5000}
             return ok()

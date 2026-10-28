@@ -171,7 +171,8 @@ class VPN:
             "expiryTime": 0,
             "enable": enable,
             "tgId": tg_id,
-            "subId": token,
+            # Панель 3.11 требует уникальный subId у каждого клиента; подписку бот раздаёт сам по token.
+            "subId": f"{token}-{node.key}",
             "comment": "",
             "reset": 0,
         }
