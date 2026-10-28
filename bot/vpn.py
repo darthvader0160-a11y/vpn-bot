@@ -43,11 +43,12 @@ class Node:
 NODE_SPECS = [
     {"key": "xhttp", "title": "Основной", "network": "xhttp", "flow": ""},
     {"key": "tcp", "title": "Резервный", "network": "tcp", "flow": VISION},
-    {"key": "x-vk", "title": "Вариант 3", "network": "xhttp", "flow": "", "port": 2053, "sni": "vk.com"},
     {"key": "t-apple", "title": "Вариант 4", "network": "tcp", "flow": VISION, "port": 2083, "sni": "www.apple.com"},
     {"key": "x-high", "title": "Вариант 5", "network": "xhttp", "flow": "", "port": 39443, "sni": "ya.ru"},
     {"key": "t-high", "title": "Вариант 6", "network": "tcp", "flow": VISION, "port": 47443, "sni": "www.samsung.com"},
 ]
+# Эти подключения дублируются в подписке по IPv6, если задан SERVER_HOST6.
+IPV6_KEYS = ("xhttp", "x-high", "t-high")
 
 
 def _b64url(raw: bytes) -> str:
@@ -257,4 +258,11 @@ class VPN:
             if node.key in uuids:
                 label = f"{self.cfg.server_name} · {node.title}"
                 out.append((node.title, vless_link(node, uuids[node.key], self.cfg.server_host, label)))
+        if self.cfg.server_host6:
+            host6 = f"[{self.cfg.server_host6}]"
+            for node in self.nodes:
+                if node.key in uuids and node.key in IPV6_KEYS:
+                    title = f"IPv6 · {node.title}"
+                    label = f"{self.cfg.server_name} · {title}"
+                    out.append((title, vless_link(node, uuids[node.key], host6, label)))
         return out

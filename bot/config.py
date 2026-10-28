@@ -14,6 +14,7 @@ class Config:
     panel_url: str            # http://127.0.0.1:<порт>/<секретный путь>
     panel_token: str          # API-токен панели 3x-ui
     server_host: str          # IP или домен сервера, который пойдёт в ключи
+    server_host6: str = ""    # IPv6 сервера: если задан, в подписку добавляются варианты по IPv6
     server_name: str = "🇳🇱 Нидерланды"
     brand: str = "Наш VPN"
     max_users: int = 50
@@ -48,6 +49,7 @@ def load() -> Config:
         panel_url=env["PANEL_URL"].rstrip("/"),
         panel_token=env["PANEL_TOKEN"],
         server_host=env["SERVER_HOST"],
+        server_host6=env.get("SERVER_HOST6", ""),
         server_name=env.get("SERVER_NAME", "🇳🇱 Нидерланды"),
         brand=env.get("BRAND", "Наш VPN"),
         max_users=int(env.get("MAX_USERS", "50")),

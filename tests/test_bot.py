@@ -134,15 +134,15 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
     async def test_nodes_created_once(self):
         await self.vpn.ensure_nodes()
         self.assertEqual([n.key for n in self.vpn.nodes][:2], ["xhttp", "tcp"])
-        self.assertEqual([i["port"] for i in self.fake.inbounds], [443, 8443, 2053, 2083, 39443, 47443])
-        self.assertEqual(self.vpn.nodes[2].sni, "vk.com")
+        self.assertEqual([i["port"] for i in self.fake.inbounds], [443, 8443, 2083, 39443, 47443])
+        self.assertEqual(self.vpn.nodes[2].sni, "www.apple.com")
         stream = json.loads(self.fake.inbounds[0]["streamSettings"])
         self.assertEqual(stream["network"], "xhttp")
         self.assertEqual(stream["realitySettings"]["target"], "www.samsung.com:443")
         # Повторный запуск не создаёт дублей и читает те же ключи.
         pbk = self.vpn.nodes[0].pbk
         await self.vpn.ensure_nodes()
-        self.assertEqual(len(self.fake.inbounds), 6)
+        self.assertEqual(len(self.fake.inbounds), 5)
         self.assertEqual(self.vpn.nodes[0].pbk, pbk)
 
     async def test_issue_links_and_subscription(self):
@@ -151,14 +151,14 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
         token = await self.vpn.issue(42)
         user = self.db.get_user(42)
         self.assertEqual(user["status"], "active")
-        self.assertEqual(len(self.fake.clients), 6)
+        self.assertEqual(len(self.fake.clients), 5)
         self.assertIn("u42-t-high", self.fake.clients)
         self.assertEqual(self.fake.clients["u42-tcp"]["client"]["flow"], "xtls-rprx-vision")
         self.assertEqual(self.fake.clients["u42-xhttp"]["client"]["flow"], "")
 
         links = self.vpn.links(42)
         self.assertEqual([t for t, _ in links][:2], ["Основной", "Резервный"])
-        self.assertEqual(len(links), 6)
+        self.assertEqual(len(links), 5)
         x = urlparse(links[0][1])
         q = {k: v[0] for k, v in parse_qs(x.query).items()}
         self.assertEqual(x.scheme, "vless")
@@ -179,7 +179,7 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(resp.status, 200)
             body = base64.b64decode(await resp.text()).decode().splitlines()
             self.assertEqual(body, [l for _, l in links])
-            self.assertIn("download=30000", resp.headers["subscription-userinfo"])
+            self.assertIn("download=25000", resp.headers["subscription-userinfo"])
             self.assertEqual((await client.get("/sub/wrong")).status, 404)
 
             await self.vpn.set_enabled(42, False)
@@ -192,6 +192,14 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
             self.assertNotEqual(new_token, token)
             self.assertEqual((await client.get(f"/sub/{token}")).status, 404)
             self.assertEqual((await client.get(f"/sub/{new_token}")).status, 200)
+
+        # IPv6: дублируются основной и высокие порты, адрес в квадратных скобках.
+        self.cfg.server_host6 = "2a00:b703:fff1:100::1"
+        v6 = [(t, l) for t, l in self.vpn.links(42) if t.startswith("IPv6")]
+        self.assertEqual([t for t, _ in v6], ["IPv6 · Основной", "IPv6 · Вариант 5", "IPv6 · Вариант 6"])
+        self.assertIn("@[2a00:b703:fff1:100::1]:443?", v6[0][1])
+        self.assertEqual(urlparse(v6[0][1]).hostname, "2a00:b703:fff1:100::1")
+        self.cfg.server_host6 = ""
 
         await self.vpn.revoke(42)
         self.assertEqual(self.fake.clients, {})
@@ -222,7 +230,7 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
         await self.vpn.ensure_nodes()
         self.db.upsert_user(9, None, "Аня", "pending")
         await self.vpn.issue(9)
-        self.assertEqual(await self.vpn.traffic(9), (6000, 30000))
+        self.assertEqual(await self.vpn.traffic(9), (5000, 25000))
         st = await self.panel.status()
         self.assertEqual(st["xray"]["state"], "running")
 

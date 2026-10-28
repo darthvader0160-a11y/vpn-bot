@@ -60,6 +60,8 @@ sysctl --system >/dev/null
 PUBLIC_IP=$(curl -4fsS --max-time 10 https://api.ipify.org || curl -4fsS --max-time 10 https://ifconfig.me || true)
 [ -n "$PUBLIC_IP" ] || fail "Не удалось узнать внешний IP сервера"
 [ -n "$(get SERVER_HOST)" ] || put SERVER_HOST "$PUBLIC_IP"
+PUBLIC_IP6=$(ip -6 addr show scope global 2>/dev/null | awk '/inet6/{print $2}' | cut -d/ -f1 | head -1 || true)
+[ -n "$PUBLIC_IP6" ] && put SERVER_HOST6 "$PUBLIC_IP6"
 
 # ---------- файрвол: снаружи видны только SSH, VPN и подписки ----------
 say "Настраиваю файрвол"
@@ -72,7 +74,7 @@ ufw allow "$SSH_PORT"/tcp >/dev/null
 ufw allow "$(get XHTTP_PORT)"/tcp >/dev/null
 ufw allow "$(get TCP_PORT)"/tcp >/dev/null
 ufw allow "$(get SUB_PORT)"/tcp >/dev/null
-for p in 2053 2083 39443 47443; do ufw allow "$p"/tcp >/dev/null; done   # запасные варианты (bot/vpn.py NODE_SPECS)
+for p in 2083 39443 47443; do ufw allow "$p"/tcp >/dev/null; done   # запасные варианты (bot/vpn.py NODE_SPECS)
 ufw --force enable >/dev/null
 
 # ---------- панель 3x-ui ----------
