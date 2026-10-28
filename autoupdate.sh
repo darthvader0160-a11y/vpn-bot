@@ -19,6 +19,18 @@ cd "$DIR" || exit 1
 exec 9>/run/vpn-autoupdate.lock
 flock -n 9 || exit 0   # предыдущее обновление ещё идёт
 
+# Туннель между серверами: Нидерланды подхватывают ключ моста, мост переподключается, если связь пропала.
+if [ -f .env ] && grep -q '^BRIDGE_HOST=.' .env; then
+  bash awg-server.sh || echo "$(date '+%F %T') awg-server.sh: ошибка"
+fi
+# Повтор не чаще раза в 15 минут, чтобы не дёргать мост, если UDP до Нидерландов закрыт.
+RETRY=/run/vpn-bridge-retry
+if [ -f /etc/vpn-bridge.conf ] && ! ping -c1 -W2 10.66.0.1 >/dev/null 2>&1 &&
+   [ -z "$(find "$RETRY" -mmin -15 2>/dev/null)" ]; then
+  touch "$RETRY"
+  bash bridge.sh "$(cat /etc/vpn-bridge.conf)" | sed "s/^/$(date '+%F %T') мост: /" | tail -2
+fi
+
 git fetch -q origin main || exit 0
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] && exit 0
 

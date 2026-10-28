@@ -214,6 +214,24 @@ class BotTest(unittest.IsolatedAsyncioTestCase):
         await self.vpn.revoke(42)
         self.assertEqual(self.fake.clients, {})
 
+    async def test_awg_exchange_only_from_bridge(self):
+        from bot.subserver import make_awg_app
+
+        key = "A" * 43 + "="
+        async with TestClient(TestServer(make_awg_app(self.vpn))) as client:
+            self.cfg.bridge_host = "198.51.100.9"   # чужой адрес — отказ
+            self.assertEqual((await client.post("/awg-exchange", data=key)).status, 403)
+            self.cfg.bridge_host = "127.0.0.1"
+            self.assertEqual((await client.post("/awg-exchange", data=key)).status, 503)  # туннель ещё не готов
+            with open(os.path.join(self.tmp.name, "awg-server.json"), "w") as f:
+                json.dump({"pubkey": "srv", "port": 45000}, f)
+            self.assertEqual((await client.post("/awg-exchange", data="junk")).status, 400)
+            resp = await client.post("/awg-exchange", data=key)
+            self.assertEqual((await resp.json())["port"], 45000)
+            with open(os.path.join(self.tmp.name, "awg-peer.pub")) as f:
+                self.assertEqual(f.read().strip(), key)
+        self.cfg.bridge_host = ""
+
     async def test_leftover_client_is_replaced(self):
         await self.vpn.ensure_nodes()
         self.fake.clients["u5-xhttp"] = {"client": {"id": "old"}, "inboundId": 1, "up": 0, "down": 0}
