@@ -15,6 +15,7 @@ class Config:
     panel_token: str          # API-токен панели 3x-ui
     server_host: str          # IP или домен сервера, который пойдёт в ключи
     server_host6: str = ""    # IPv6 сервера: если задан, в подписку добавляются варианты по IPv6
+    bridge_host: str = ""     # IP моста в России (bridge.sh): если задан, варианты через мост идут первыми
     server_name: str = "🇳🇱 Нидерланды"
     brand: str = "Наш VPN"
     max_users: int = 50
@@ -50,6 +51,7 @@ def load() -> Config:
         panel_token=env["PANEL_TOKEN"],
         server_host=env["SERVER_HOST"],
         server_host6=env.get("SERVER_HOST6", ""),
+        bridge_host=env.get("BRIDGE_HOST", ""),
         server_name=env.get("SERVER_NAME", "🇳🇱 Нидерланды"),
         brand=env.get("BRAND", "Наш VPN"),
         max_users=int(env.get("MAX_USERS", "50")),

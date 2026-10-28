@@ -254,6 +254,13 @@ class VPN:
         """[(название, vless-ссылка)] в порядке подключений."""
         uuids = {c["node"]: c["uuid"] for c in self.db.clients(tg_id)}
         out = []
+        if self.cfg.bridge_host:
+            # Мост пересылает подключения на нидерландский сервер как есть, поэтому ключи те же.
+            for node in self.nodes:
+                if node.key in uuids:
+                    title = f"🇷🇺 Мост · {node.title}"
+                    label = f"{self.cfg.brand} · {title}"
+                    out.append((title, vless_link(node, uuids[node.key], self.cfg.bridge_host, label)))
         for node in self.nodes:
             if node.key in uuids:
                 label = f"{self.cfg.server_name} · {node.title}"
