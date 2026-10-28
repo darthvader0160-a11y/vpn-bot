@@ -53,9 +53,10 @@ IPV6_KEYS = ("xhttp", "x-high", "t-high")
 # Третий элемент — отпечаток TLS: V2Box с "chrome" шлёт большой ClientHello (постквантовый ключ),
 # который по дороге режется ("failed to read client hello"), с "safari" он короче и проходит.
 BRIDGE_VARIANTS = [
-    ("t-high", "🇷🇺 Основной", None),
-    ("x-high", "🇷🇺 Резервный", None),
-    ("t-high", "🇷🇺 Для V2Box", "safari"),
+    ("t-apple", "🇷🇺 Основной", None),       # 2083: прошёл самопроверку через мост 28.10 17:48
+    ("t-high", "🇷🇺 Резервный 1", None),     # 47443
+    ("x-high", "🇷🇺 Резервный 2", None),     # 39443
+    ("t-apple", "🇷🇺 Для V2Box", "safari"),
 ]
 
 
